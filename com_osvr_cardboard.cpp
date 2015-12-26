@@ -39,9 +39,9 @@
 // Anonymous namespace to avoid symbol collision
 namespace {
 
-class AnalogExampleDevice {
+class CardboardDevice {
   public:
-    AnalogExampleDevice(OSVR_PluginRegContext ctx) : m_myVal(0) {
+    CardboardDevice(OSVR_PluginRegContext ctx) : m_myVal(0) {
         /// Create the initialization options
         OSVR_DeviceInitOptions opts = osvrDeviceCreateInitOptions(ctx);
 
@@ -49,7 +49,7 @@ class AnalogExampleDevice {
         osvrDeviceAnalogConfigure(opts, &m_analog, 1);
 
         /// Create the device token with the options
-        m_dev.initAsync(ctx, "MyExampleDevice", opts);
+        m_dev.initAsync(ctx, "CardBoard Server", opts);
 
         /// Send JSON descriptor
         m_dev.sendJsonDescriptor(com_osvr_cardboard_json);
@@ -99,7 +99,7 @@ class HardwareDetection {
 
             /// Create our device object
             osvr::pluginkit::registerObjectForDeletion(
-                ctx, new AnalogExampleDevice(ctx));
+                ctx, new CardboardDevice(ctx));
         }
         return OSVR_RETURN_SUCCESS;
     }
@@ -111,7 +111,7 @@ class HardwareDetection {
 };
 } // namespace
 
-OSVR_PLUGIN(com_osvr_cardboard) {
+OSVR_PLUGIN(com_osvr_Cardboard) {
     osvr::pluginkit::PluginContext context(ctx);
 
     /// Register a detection callback function object.

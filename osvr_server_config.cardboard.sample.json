@@ -1,0 +1,11 @@
+{
+  "drivers": [
+    {
+      "plugin": "com_osvr_Cardboard",
+      "driver": "OculusRift",
+      "params": {
+        "index": 0
+      }
+    }
+  ],
+}
