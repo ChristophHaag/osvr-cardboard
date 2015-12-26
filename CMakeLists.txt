@@ -12,7 +12,7 @@ find_package(osvr REQUIRED)
 # named com_osvr_example_selfcontained_json (not null terminated)
 # The file must be added as a source file to some target (as below) to be generated.
 osvr_convert_json(com_osvr_cardboard_json
-    com_osvr_cardboard.json
+    com_osvr_Cardboard.json
     "${CMAKE_CURRENT_BINARY_DIR}/com_osvr_cardboard_json.h")
 
 # Be able to find our generated header file.
