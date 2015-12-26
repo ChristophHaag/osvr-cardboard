@@ -26,6 +26,7 @@
 // Internal Includes
 #include <osvr/PluginKit/PluginKit.h>
 #include <osvr/PluginKit/AnalogInterfaceC.h>
+#include <osvr/PluginKit/TrackerInterfaceC.h>
 
 // Generated JSON header file
 #include "com_osvr_cardboard_json.h"
@@ -35,7 +36,7 @@
 
 // Standard includes
 #include <iostream>
-
+#include <unistd.h>//TODO: remove
 // Anonymous namespace to avoid symbol collision
 namespace {
 
@@ -45,8 +46,9 @@ class CardboardDevice {
         /// Create the initialization options
         OSVR_DeviceInitOptions opts = osvrDeviceCreateInitOptions(ctx);
 
-        /// Indicate that we'll want 1 analog channel.
-        osvrDeviceAnalogConfigure(opts, &m_analog, 1);
+        
+        osvrDeviceAnalogConfigure(opts, &m_analog, 10);
+	osvrDeviceTrackerConfigure(opts, &m_tracker);
 
         /// Create the device token with the options
         m_dev.initAsync(ctx, "CardBoard Server", opts);
@@ -58,31 +60,53 @@ class CardboardDevice {
         m_dev.registerUpdateCallback(this);
     }
 
+    float up = 0.01;
     OSVR_ReturnCode update() {
         /// This dummy loop just wastes time, to pretend to be your plugin
         /// blocking to wait for the arrival of data. It should be completely
         /// removed from your plugin.
-        volatile int j; // volatile to keep it from being optimized out.
-        for (int i = 0; i < 10000; ++i) {
-            j = i;
-        }
+        usleep(16000);
         /// End time-waster loop.
 
         /// Make up some dummy data that changes to report.
-        m_myVal = (m_myVal + 0.1);
-        if (m_myVal > 10.0) {
-            m_myVal = 0;
-        }
-        std::cout << "PLUGIN: Report " << m_myVal << std::endl;
 
+        if (m_myVal > .25 || m_myVal < - .25) {
+            up = - up;
+        }
+	m_myVal = (m_myVal + up);
+
+        //std::cout << "PLUGIN: Report " << m_myVal << std::endl;
+
+        OSVR_Pose3 hmd_pose;
+        hmd_pose.translation.data[0] = m_myVal;
+        hmd_pose.translation.data[1] = m_myVal;
+        hmd_pose.translation.data[2] = m_myVal;
+        hmd_pose.rotation.data[0] = 0;
+        hmd_pose.rotation.data[1] = 0;
+        hmd_pose.rotation.data[2] = 0;
+        hmd_pose.rotation.data[3] = 0;
+
+        osvrDeviceTrackerSendPose(m_dev, m_tracker, &hmd_pose, 0);
+	
         /// Report the value of channel 0
-        osvrDeviceAnalogSetValue(m_dev, m_analog, m_myVal, 0);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 0);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 1);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 2);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 3);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 4);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 5);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 6);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 7);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 8);
+        osvrDeviceAnalogSetValue(m_dev, m_analog, 0, 9);
+
         return OSVR_RETURN_SUCCESS;
     }
 
   private:
     osvr::pluginkit::DeviceToken m_dev;
     OSVR_AnalogDeviceInterface m_analog;
+    OSVR_TrackerDeviceInterface m_tracker;
     double m_myVal;
 };
 

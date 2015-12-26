@@ -4,20 +4,40 @@
   "author": "Ryan Pavlik <ryan@sensics.com>",
   "version": 1,
   "lastModified": "2015-01-30T21:13:07.585Z",
+  "index": 0,
   "interfaces": {
+    "tracker": {
+      "count": 3,
+      "position": true,
+      "orientation": true
+    },
     "analog": {
-      "count": 1,
-      "traits": [
-        {
-          "min": 0,
-          "max": 10
-        }
-      ]
+      "count": 10,
+      "traits": [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}]
     }
   },
-  "semantics": {
-    "value": {
-      "$target": "analog/0"
+  "semantic": {
+    "hmd": {
+      "$target": "tracker/0",
+      "accelerometer": {
+        "x": "analog/0",
+        "y": "analog/1",
+        "z": "analog/2"
+      },
+      "gyroscope": {
+        "x": "analog/3",
+        "y": "analog/4",
+        "z": "analog/5"
+      },
+      "magnetometer": {
+        "x": "analog/6",
+        "y": "analog/7",
+        "z": "analog/8"
+      },
+      "temperature": "analog/9"
     }
+  },
+  "automaticAliases": {
+    "/me/head": "semantic/hmd"
   }
 }
