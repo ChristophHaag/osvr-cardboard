@@ -37,6 +37,19 @@
 // Standard includes
 #include <iostream>
 #include <unistd.h>//TODO: remove
+#include <strings.h> //bzero
+
+#define BUFSIZE 256 // about enough
+#include <string>
+#include <sstream>
+#include <vector>
+
+//TODO: multiplatform
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h> 
+#include <arpa/inet.h>
+
 // Anonymous namespace to avoid symbol collision
 namespace {
 
@@ -56,35 +69,64 @@ class CardboardDevice {
         /// Send JSON descriptor
         m_dev.sendJsonDescriptor(com_osvr_cardboard_json);
 
+        serv_addr.sin_family = AF_INET;
+	struct sockaddr_in localaddr;
+	struct sockaddr_in remoteaddr;
+	remoteaddr.sin_family = AF_INET;
+	remoteaddr.sin_addr.s_addr = inet_addr("192.168.1.22");
+	remoteaddr.sin_port = htons(8000);
+	connect(sockfd, (struct sockaddr *)&remoteaddr, sizeof(remoteaddr));
+	std::cout << "Connected!" << std::endl;
+
         /// Register update callback
         m_dev.registerUpdateCallback(this);
     }
 
+    std::vector<std::string> &split(char *s, char delim, std::vector<std::string> &elems) {
+      std::stringstream ss(s);
+      std::string item;
+      while (std::getline(ss, item, delim)) {
+	  elems.push_back(item);
+      }
+      return elems;
+}
+    
     float up = 0.01;
     OSVR_ReturnCode update() {
         /// This dummy loop just wastes time, to pretend to be your plugin
         /// blocking to wait for the arrival of data. It should be completely
         /// removed from your plugin.
-        usleep(16000);
+//         usleep(16000);
         /// End time-waster loop.
 
         /// Make up some dummy data that changes to report.
 
-        if (m_myVal > .25 || m_myVal < - .25) {
-            up = - up;
-        }
-	m_myVal = (m_myVal + up);
+//         if (m_myVal > .25 || m_myVal < - .25) {
+//             up = - up;
+//         }
+// 	m_myVal = (m_myVal + up);
 
-        //std::cout << "PLUGIN: Report " << m_myVal << std::endl;
+	bzero(buffer,256);
+	//int n = read(sockfd,buffer,255);
+	size_t buf_idx = 0;
+	while (buf_idx < BUFSIZE && 1 == read(sockfd, &buffer[buf_idx], 1)) {
+	    if (buf_idx > 0 && '\n' == buffer[buf_idx]) {
+		break;
+	    }
+	    buf_idx++;
+	}
+	std::vector<std::string> elems;
+	split(buffer, ',', elems);
+        //std::cout << "PLUGIN: Report " << std::endl << buffer << elems.at(0) << "," << elems.at(1) << "," << elems.at(2) << "," << elems.at(3) << std::endl;
 
         OSVR_Pose3 hmd_pose;
-        hmd_pose.translation.data[0] = m_myVal;
-        hmd_pose.translation.data[1] = m_myVal;
-        hmd_pose.translation.data[2] = m_myVal;
-        hmd_pose.rotation.data[0] = 0;
-        hmd_pose.rotation.data[1] = 0;
-        hmd_pose.rotation.data[2] = 0;
-        hmd_pose.rotation.data[3] = 0;
+        hmd_pose.translation.data[0] = 0;
+        hmd_pose.translation.data[1] = 0;
+        hmd_pose.translation.data[2] = 0;
+        hmd_pose.rotation.data[0] = atof(elems.at(0).c_str());
+        hmd_pose.rotation.data[1] = atof(elems.at(1).c_str());
+        hmd_pose.rotation.data[2] = atof(elems.at(2).c_str());
+        hmd_pose.rotation.data[3] = atof(elems.at(3).c_str());
 
         osvrDeviceTrackerSendPose(m_dev, m_tracker, &hmd_pose, 0);
 	
@@ -108,6 +150,12 @@ class CardboardDevice {
     OSVR_AnalogDeviceInterface m_analog;
     OSVR_TrackerDeviceInterface m_tracker;
     double m_myVal;
+    
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    int portno = 8000;
+    struct sockaddr_in serv_addr;
+    struct hostent *server;
+    char buffer[BUFSIZE];
 };
 
 class HardwareDetection {
